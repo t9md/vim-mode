@@ -5,10 +5,8 @@ _ = require 'underscore-plus'
 settings = require './settings'
 
 Operators = require './operators/index'
-Operator = Operators.Operator
 Prefixes = require './prefixes'
 Motions = require './motions/index'
-Motion = Motions.Motion
 
 TextObjects = require './text-objects'
 Utils = require './utils'
@@ -215,8 +213,8 @@ class VimState
   pushOperations: (operations) ->
     return unless operations?
     operations = [operations] unless _.isArray(operations)
-    console.log "Before"
-    console.log operations
+    # console.log "Before"
+    # console.log operations
 
     for operation in operations
       # Motions in visual mode perform their selections.
@@ -232,16 +230,15 @@ class VimState
         break
 
       @operationStack.push(operation)
-      console.log "After"
-      console.log @operationStack
+      # console.log "After"
+      # console.log @operationStack
 
       # If we've received an operator in visual mode, mark the current
       # selection as the motion to operate on.
       if @mode is 'visual' and @isOperator(operation)
         @operationStack.push(new Motions.CurrentSelection(@editor, this))
-        # [Yank, CurrentSelection]
-        console.log "After visual"
-        console.log @operationStack
+        # console.log "After visual"
+        # console.log @operationStack
 
       @processOperation()
 
