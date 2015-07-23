@@ -115,9 +115,6 @@ class CurrentSelection extends Motion
     super(@editor, @vimState)
     @selection = @editor.getSelectedBufferRanges()
 
-  execute: (count=1) ->
-    _.times(count, -> true)
-
   select: (count=1) ->
     @editor.setSelectedBufferRanges(@selection)
     _.times(count, -> true)
