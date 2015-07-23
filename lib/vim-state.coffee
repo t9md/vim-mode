@@ -5,10 +5,8 @@ _ = require 'underscore-plus'
 settings = require './settings'
 
 Operators = require './operators/index'
-Operator = Operators.Operator
 Prefixes = require './prefixes'
 Motions = require './motions/index'
-Motion = Motions.Motion
 
 TextObjects = require './text-objects'
 Utils = require './utils'
@@ -220,7 +218,7 @@ class VimState
 
     for operation in operations
       # Motions in visual mode perform their selections.
-      if @mode is 'visual' and (operation instanceof Motions.Motion or operation instanceof TextObjects.TextObject)
+      if @mode is 'visual' and (@isMotion(operation) or @isTextObject(operation))
         operation.execute = operation.select
 
       # if we have started an operation that responds to canComposeWith check if it can compose
@@ -237,7 +235,7 @@ class VimState
 
       # If we've received an operator in visual mode, mark the current
       # selection as the motion to operate on.
-      if @mode is 'visual' and operation instanceof Operator
+      if @mode is 'visual' and @isOperator(operation)
         @operationStack.push(new Motions.CurrentSelection(@editor, this))
         # [Yank, CurrentSelection]
         console.log "After visual"
@@ -261,6 +259,18 @@ class VimState
     @editor.undo()
     @activateNormalMode()
 
+  isRepeat: (arg) ->
+    arg instanceof Prefixes.Repeat
+
+  isOperator: (arg) ->
+    arg instanceof Operators.Operator
+
+  isTextObject: (arg) ->
+    arg instanceof TextObjects.TextObject
+
+  isMotion: (arg) ->
+    arg instanceof Motions.Motion
+
   # Private: Processes the command if the last operation is complete.
   #
   # Returns nothing.
@@ -268,13 +278,10 @@ class VimState
     return if _.isEmpty(@operationStack)
 
     lastOperation = @getLastOperation()
-    if @mode is 'normal' and (not lastOperation.isComplete()) and (lastOperation instanceof Operator)
+    unless lastOperation.isComplete()
+      if @mode is 'normal' and @isOperator(lastOperation)
         @activateOperatorPendingMode()
       return
-    # unless @getLastOperation().isComplete()
-    #   if @mode is 'normal' and @getLastOperation() instanceof Operators.Operator
-    #     @activateOperatorPendingMode()
-    #   return
 
     poppedOperation = @operationStack.pop()
     if @operationStack.length
@@ -603,8 +610,8 @@ class VimState
   repeatPrefix: (e) ->
     keyboardEvent = e.originalEvent?.originalEvent ? e.originalEvent
     num = parseInt(atom.keymaps.keystrokeForKeyboardEvent(keyboardEvent))
-    if @getLastOperation() instanceof Prefixes.Repeat
-      @getLastOperation().addDigit(num)
+    if @isRepeat(lastOperation = @getLastOperation())
+      lastOperation.addDigit(num)
     else
       if num is 0
         e.abortKeyBinding()
@@ -624,7 +631,7 @@ class VimState
   #
   # Returns new motion or nothing.
   moveOrRepeat: (e) ->
-    if @getLastOperation() instanceof Prefixes.Repeat
+    if @isRepeat(@getLastOperation())
       @repeatPrefix(e)
       null
     else
