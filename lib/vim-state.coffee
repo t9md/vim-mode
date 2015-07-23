@@ -5,8 +5,10 @@ _ = require 'underscore-plus'
 settings = require './settings'
 
 Operators = require './operators/index'
+Operator = Operators.Operator
 Prefixes = require './prefixes'
 Motions = require './motions/index'
+Motion = Motions.Motion
 
 TextObjects = require './text-objects'
 Utils = require './utils'
@@ -282,6 +284,10 @@ class VimState
       if @mode is 'normal' and @isOperator(lastOperation)
         @activateOperatorPendingMode()
       return
+    # unless @getLastOperation().isComplete()
+    #   if @mode is 'normal' and @getLastOperation() instanceof Operators.Operator
+    #     @activateOperatorPendingMode()
+    #   return
 
     poppedOperation = @operationStack.pop()
     if @operationStack.length
